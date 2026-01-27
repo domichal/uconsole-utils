@@ -1,7 +1,7 @@
 # uconsole-aio-v2-manage-features
 Management script for HackerGadgets AIOv2 features
 
-<img width="383" height="111" alt="image" src="https://github.com/user-attachments/assets/2ff84867-c433-419b-a279-9a2e90ca67f9" />
+<img width="376" height="124" alt="image" src="https://github.com/user-attachments/assets/04a1ca32-4181-48e8-afbf-5b21341ae375" />
 
 ## Instructions:  
 - clone or just download the script  
