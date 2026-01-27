@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# persistance settings
+p_file=".aio-v2-settings"
+rc_file=".bashrc"
+
+bashrc_tpl="
+if [ -f ~/$p_file ]; then
+    . ~/$p_file
+fi
+"
+
 declare -A features=(
   [SDR]=7
   [LORA]=16
@@ -8,6 +18,19 @@ declare -A features=(
 )
 
 selected=0
+
+persist(){
+  if ! grep -q "$p_file" "$HOME/$rc_file"; then
+    echo "$bashrc_tpl" >> "$HOME/$rc_file"
+  fi
+  output=""
+  for ((i=0; i<${#features[@]}; i++)); do
+    [[ "${feature_states[$i]}" == "on" ]] && cmd="dh" || cmd="dl"
+    pin=${features[${feature_names[$i]}]}
+    output+="pinctrl $pin op && pinctrl $pin $cmd\n"
+  done
+  echo -e "$output" > "$HOME/$p_file"
+}
 
 readPinState() {
   local pin="$1"
@@ -35,6 +58,7 @@ readStates() {
     feature_names+=("$feature")
     feature_states+=("$(readPinState "${features[$feature]}")")
   done
+  feature_names+=("Persist current settings")
   feature_names+=("Exit")
 }
 
@@ -58,7 +82,7 @@ draw_menu() {
       pre=""
       post=""
     fi
-    [ ${#feature_names[@]} -eq $((i + 1)) ] && line="${feature_names[$i]}" || line="${feature_names[$i]}: ${feature_states[$i]}"
+    [ -v ${feature_states[$i]} ] && line="${feature_names[$i]}" || line="${feature_names[$i]}: ${feature_states[$i]}"
     echo -e "${pre} ${indicator} ${line} ${post}"
   done
 }
@@ -85,7 +109,10 @@ run() {
         [ $selected == ${#feature_names[@]} ] && selected=0
         ;;
       '') # Enter key
-        if [ $selected -eq $((${#feature_names[@]} - 1)) ]; then
+        if [ $selected -eq $((${#feature_names[@]} - 2)) ]; then
+          persist && echo "Done!" || echo "Something went wrong"
+          sleep 1
+        elif [ $selected -eq $((${#feature_names[@]} - 1)) ]; then
           echo "Bye!"
           exit 0
         else
